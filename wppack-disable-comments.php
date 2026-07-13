@@ -28,16 +28,10 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Self-contained autoloader: works without Composer (plain plugin install).
-spl_autoload_register(static function (string $class): void {
-    if (!str_starts_with($class, __NAMESPACE__ . '\\')) {
-        return;
-    }
-    $relative = substr($class, strlen(__NAMESPACE__) + 1);
-    $path = __DIR__ . '/src/' . str_replace('\\', '/', $relative) . '.php';
-    if (is_file($path)) {
-        require $path;
-    }
-});
+// Composer installs resolve the class through the site autoloader (see the
+// PSR-4 mapping in composer.json); plain plugin installs load it here.
+if (!class_exists(DisableCommentsPlugin::class)) {
+    require __DIR__ . '/src/DisableCommentsPlugin.php';
+}
 
 DisableCommentsPlugin::boot();

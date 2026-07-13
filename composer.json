@@ -3,18 +3,92 @@
     "description": "Completely disable comments: closes discussion everywhere, hides existing comments, and removes every comment surface from wp-admin, feeds, REST and XML-RPC.",
     "type": "wordpress-plugin",
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://repo.wp-packages.org",
+            "only": [
+                "wp-plugin/*",
+                "wp-theme/*"
+            ]
+        }
+    ],
     "require": {
         "php": "^8.2",
         "composer/installers": "^2.0"
     },
+    "autoload": {
+        "psr-4": {
+            "WPPack\\Plugin\\DisableCommentsPlugin\\": "src/"
+        }
+    },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.68",
         "phpstan/phpstan": "^2.1",
-        "szepeviktor/phpstan-wordpress": "^2.0"
+        "phpstan/phpstan-phpunit": "^2.0",
+        "phpunit/phpunit": "^11.5",
+        "roots/wordpress-core-installer": "^3.0",
+        "roots/wordpress-full": ">=6.7 <8.0",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-cli/config-command": "^2.3",
+        "wp-cli/core-command": "^2.1",
+        "wp-cli/db-command": "^2.1",
+        "wp-cli/entity-command": "^2.8",
+        "wp-cli/extension-command": "^2.1",
+        "wp-cli/i18n-command": "^2.7",
+        "wp-cli/language-command": "^2.0",
+        "wp-cli/server-command": "^2.0",
+        "wp-cli/wp-cli": "^2.12",
+        "wp-phpunit/wp-phpunit": ">=6.7 <8.0",
+        "wp-theme/twentytwentyfive": "*",
+        "wpnx-io/wp-translations": "*",
+        "yoast/phpunit-polyfills": "^4.0"
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "WPPack\\Plugin\\DisableCommentsPlugin\\Tests\\": "tests/"
+        }
     },
     "config": {
         "allow-plugins": {
-            "composer/installers": true
+            "composer/installers": true,
+            "roots/wordpress-core-installer": true,
+            "wpnx-io/wp-translations": true
+        },
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "platform": {
+            "php": "8.2.99"
         }
+    },
+    "extra": {
+        "installer-name": "wppack-disable-comments",
+        "wordpress-install-dir": "web/wp",
+        "installer-paths": {
+            "web/wp-content/plugins/{$name}/": [
+                "type:wordpress-plugin"
+            ],
+            "web/wp-content/themes/{$name}/": [
+                "type:wordpress-theme"
+            ]
+        },
+        "wordpress-translations": [
+            "ja"
+        ],
+        "wordpress-translations-dir": "web/wp-content/languages"
+    },
+    "prefer-stable": true,
+    "archive": {
+        "exclude": [
+            "/.gitignore",
+            "/.php-cs-fixer.php",
+            "/compose.yaml",
+            "/phpstan.neon",
+            "/phpunit.xml.dist",
+            "/tests",
+            "/web",
+            "/vendor"
+        ]
     }
 }
