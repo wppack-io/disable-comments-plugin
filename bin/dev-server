@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Starts the browser-testing dev server (wp-cli's built-in server).
+#
+# Usage: [DISABLE_COMMENTS_DEV_PORT=8080] bin/dev-server
+
+set -eu
+cd "$(dirname "$0")/.."
+
+# Multiple workers: WordPress makes blocking loopback HTTP requests (cron
+# spawn, REST, Site Health) and a single-worker `php -S` deadlocks on them
+# until the 30s execution limit kills the page mid-render.
+export PHP_CLI_SERVER_WORKERS="${PHP_CLI_SERVER_WORKERS:-6}"
+
+exec vendor/bin/wp server --port="${DISABLE_COMMENTS_DEV_PORT:-8080}"
