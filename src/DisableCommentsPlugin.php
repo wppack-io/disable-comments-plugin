@@ -126,7 +126,8 @@ final class DisableCommentsPlugin
     {
         // Late on init, after every post type has registered.
         add_action('init', static function (): void {
-            foreach (get_post_types() as $postType) {
+            // Keys are the post type names whatever the 'fields' inference says.
+            foreach (array_keys(get_post_types()) as $postType) {
                 remove_post_type_support($postType, 'comments');
                 remove_post_type_support($postType, 'trackbacks');
             }
