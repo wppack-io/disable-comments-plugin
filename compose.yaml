@@ -6,7 +6,6 @@ services:
       MYSQL_ROOT_PASSWORD: password
       MYSQL_DATABASE: disable_comments_dev
     ports:
-      # Non-default ports; see "Toolchain" in CLAUDE.md.
       - '3310:3306'
     volumes:
       - mysql-data:/var/lib/mysql
