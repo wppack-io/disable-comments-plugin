@@ -18,11 +18,12 @@ options in the database.
 
 **wp-admin**
 
-- Removes the Comments menu, Settings › Discussion, the Recent Comments
-  dashboard widget, the toolbar comments bubble and the classic Recent
-  Comments widget. Comment and trackback support is dropped from every post
-  type, which also removes the Discussion metaboxes, the block editor's
-  discussion panel and the comment columns on list tables.
+- Removes the Comments menu, Settings › Discussion, the toolbar comments
+  bubble and the classic Recent Comments widget; the dashboard's "At a
+  Glance" and Activity widgets show no comments. Comment and trackback
+  support is dropped from every post type, which also removes the Discussion
+  metaboxes, the block editor's discussion panel and the comment columns on
+  list tables.
 - Direct hits on `edit-comments.php`, `comment.php` or
   `options-discussion.php` bounce to the dashboard.
 
@@ -32,7 +33,8 @@ options in the database.
   document head.
 - The `X-Pingback` header, RSD link and pingback URL are gone; the
   `/wp/v2/comments` REST routes and every comment/pingback XML-RPC method are
-  unregistered.
+  unregistered, and post/page REST responses stop advertising a `replies`
+  link.
 
 ## What it deliberately leaves alone
 

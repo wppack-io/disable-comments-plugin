@@ -24,7 +24,7 @@ namespace WPPack\Plugin\DisableCommentsPlugin;
  */
 final class DisableCommentsPlugin
 {
-    /** Comment types that make up on-site discussion ('' is the legacy alias for 'comment'). */
+    /** Comment types, as stored in the DB, that make up on-site discussion ('' is the legacy value for 'comment'). */
     private const DISCUSSION_TYPES = ['', 'comment', 'pingback', 'trackback'];
 
     public static function boot(): void
@@ -73,18 +73,48 @@ final class DisableCommentsPlugin
         ], PHP_INT_MAX);
     }
 
-    /** @param \WP_Comment_Query $query */
     private static function queriesDiscussion(\WP_Comment_Query $query): bool
     {
-        $types = $query->query_vars['type__in'] ?: $query->query_vars['type'];
-        foreach ((array) $types as $type) {
-            if (in_array($type, self::DISCUSSION_TYPES, true)) {
+        // Mirror how WP_Comment_Query builds its type clauses: 'type' and
+        // 'type__in' merge into one IN list, 'type__not_in' becomes NOT IN.
+        $in = self::expandTypes(array_merge(
+            (array) $query->query_vars['type'],
+            (array) $query->query_vars['type__in'],
+        ));
+        $notIn = self::expandTypes((array) $query->query_vars['type__not_in']);
+
+        // Discussion is queried if any discussion type survives both clauses
+        // (an empty IN list constrains nothing, so every type is queried).
+        foreach (self::DISCUSSION_TYPES as $type) {
+            if (($in === [] || in_array($type, $in, true)) && !in_array($type, $notIn, true)) {
                 return true;
             }
         }
 
-        // No type constraint means "all types", which includes discussion.
-        return (array) $types === [] || (array) $types === [''];
+        return false;
+    }
+
+    /**
+     * Expand comment-type query vars to the DB values core matches against:
+     * '' and 'all' constrain nothing, 'comment'/'comments' also cover the
+     * legacy '' rows, 'pings' covers pingbacks and trackbacks.
+     *
+     * @param array<mixed> $types
+     * @return list<string>
+     */
+    private static function expandTypes(array $types): array
+    {
+        $expanded = [];
+        foreach ($types as $type) {
+            $expanded = array_merge($expanded, match ($type) {
+                '', 'all' => [],
+                'comment', 'comments' => ['', 'comment'],
+                'pings' => ['pingback', 'trackback'],
+                default => [(string) $type],
+            });
+        }
+
+        return $expanded;
     }
 
     /**
@@ -118,15 +148,11 @@ final class DisableCommentsPlugin
             global $wp_query;
             $wp_query->set_404();
             status_header(404);
-        }, 9); // Before the feed template callback at 10 renders output.
+        }, 9); // Before redirect_canonical() at 10, so dead feed URLs 404 instead of redirecting.
 
-        // Stop advertising the pingback endpoint; pings_open already refuses
-        // the pingbacks themselves.
-        add_filter('wp_headers', static function (array $headers): array {
-            unset($headers['X-Pingback']);
-
-            return $headers;
-        });
+        // Stop advertising the pingback endpoint. pings_open (forced false
+        // above) already keeps core from sending the X-Pingback header and
+        // from accepting the pings themselves.
         remove_action('wp_head', 'rsd_link');
         add_filter('bloginfo_url', static function ($value, $show) {
             return $show === 'pingback_url' ? '' : $value;
@@ -141,6 +167,17 @@ final class DisableCommentsPlugin
 
             return $endpoints;
         });
+
+        // Core adds a 'replies' link to post and page responses even without
+        // comment support; drop it so nothing points at the removed route.
+        // (Custom post types lose the link with their comment support.)
+        foreach (['post', 'page'] as $postType) {
+            add_filter("rest_prepare_{$postType}", static function (\WP_REST_Response $response): \WP_REST_Response {
+                $response->remove_link('replies');
+
+                return $response;
+            });
+        }
 
         add_filter('xmlrpc_methods', static function (array $methods): array {
             foreach (array_keys($methods) as $method) {
@@ -173,10 +210,11 @@ final class DisableCommentsPlugin
             }
         });
 
-        // "Recent Comments" dashboard widget.
-        add_action('wp_dashboard_setup', static function (): void {
-            remove_meta_box('dashboard_recent_comments', 'dashboard', 'normal');
-        });
+        // The dashboard needs nothing extra: "At a Glance" hides its comment
+        // line at a zero wp_count_comments, and the Activity widget's recent
+        // comments section queries through comments_pre_query and comes back
+        // empty. (There has been no separate "Recent Comments" dashboard
+        // widget since WP 3.8.)
 
         // Toolbar comments bubble, in wp-admin and on the front end.
         add_action('admin_bar_menu', static function (\WP_Admin_Bar $bar): void {
