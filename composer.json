@@ -81,15 +81,19 @@
     "prefer-stable": true,
     "archive": {
         "exclude": [
+            "/.github",
             "/.gitignore",
             "/.php-cs-fixer.php",
             "/.wordpress-org",
+            "/CLAUDE.md",
+            "/bin",
             "/compose.yaml",
             "/phpstan.neon",
             "/phpunit.xml.dist",
             "/tests",
             "/web",
-            "/vendor"
+            "/vendor",
+            "/wp-cli.yml"
         ]
     }
 }
