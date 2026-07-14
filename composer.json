@@ -41,7 +41,7 @@
         "wp-cli/wp-cli": "^2.12",
         "wp-phpunit/wp-phpunit": ">=6.7 <8.0",
         "wp-theme/twentytwentyfive": "*",
-        "wpnx-io/wp-translations": "*",
+        "wppack/translations-installer": "^1.1",
         "yoast/phpunit-polyfills": "^4.0"
     },
     "autoload-dev": {
@@ -53,7 +53,7 @@
         "allow-plugins": {
             "composer/installers": true,
             "roots/wordpress-core-installer": true,
-            "wpnx-io/wp-translations": true
+            "wppack/translations-installer": true
         },
         "optimize-autoloader": true,
         "preferred-install": "dist",
