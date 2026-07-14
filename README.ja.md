@@ -1,5 +1,7 @@
 # WPPack Disable Comments
 
+![WPPack Disable Comments](.wordpress-org/banner-1544x500.png)
+
 WordPress のコメント機能を完全に無効化するプラグイン。有効化すればコメント
 システム全体が消え、無効化すればすべて元通り。設定画面はなく、データベースに
 オプションも作りません。

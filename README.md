@@ -1,5 +1,7 @@
 # WPPack Disable Comments
 
+![WPPack Disable Comments](.wordpress-org/banner-1544x500.png)
+
 Completely disable comments in WordPress. Activate it and the comment system
 is gone; deactivate it and everything comes back. No settings screen, no
 options in the database.
