@@ -83,6 +83,7 @@
         "exclude": [
             "/.gitignore",
             "/.php-cs-fixer.php",
+            "/.wordpress-org",
             "/compose.yaml",
             "/phpstan.neon",
             "/phpunit.xml.dist",
