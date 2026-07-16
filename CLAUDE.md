@@ -107,6 +107,12 @@ surface is gone, deactivate, confirm the comment is back.
   ≤ ~70 chars; multi-line bodies via HEREDOC.
 - Commit at logical boundaries on your own judgment; never `git push`
   without an explicit instruction.
+- **A pushed release tag is immutable** — the plugin is consumed via
+  Packagist, where moving or deleting a published tag is forbidden. Never
+  retag; if a released tag is wrong, cut a new higher version. Tags are
+  `v`-prefixed (`vX.Y.Z`), annotated+signed (`git tag -m`), match the
+  `Version:` plugin header (bumped in a `chore(release)` commit), and use
+  semver: `feat` → minor, fix-only → patch.
 
 ## Session Hygiene
 
