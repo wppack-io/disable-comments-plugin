@@ -98,6 +98,15 @@ To verify the "reversible" contract in the browser: `bin/dev-reset`, look at
 the seeded post (comment visible), activate the plugin, confirm every
 surface is gone, deactivate, confirm the comment is back.
 
+## Release procedure
+
+- **Bump the `Version:` header in `wppack-disable-comments.php` to match the
+  tag BEFORE tagging.** `wp plugin list` reads the header, not the composer
+  version (sanitize-characters shipped a v1.0.1 with a `1.0.0` header this
+  way).
+- Tags are `vX.Y.Z`. Packagist picks new tags up automatically via the
+  GitHub integration — no manual submission.
+
 ## Git commit discipline
 
 - **One commit = one logical change.** Never sweep in unrelated changes;
