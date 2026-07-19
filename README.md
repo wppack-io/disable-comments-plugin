@@ -18,6 +18,16 @@ options in the database.
   database — the Latest Comments block, the classic Recent Comments widget
   and direct `WP_Comment_Query` calls all come back empty.
 
+**Block editor**
+
+- Comment-related blocks — Comments and its inner blocks, Comment Form,
+  Latest Comments, comment counts and links — are hidden from the inserter
+  and render nothing on the front end. Blocks already placed in content or
+  templates stay intact (no "unavailable block" warnings) and come back on
+  deactivation.
+- The site editor's "Discussion" row on the Home and Index templates, which
+  edits the site-wide default comment status, is hidden.
+
 **wp-admin**
 
 - Removes the Comments menu, Settings › Discussion, the toolbar comments
