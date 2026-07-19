@@ -14,11 +14,33 @@ declare(strict_types=1);
 namespace WPPack\Plugin\DisableCommentsPlugin\Tests;
 
 use WP_Admin_Bar;
+use WP_Block_Type_Registry;
 use WP_Query;
 use WP_REST_Request;
 
 final class DisableCommentsPluginTest extends TestCase
 {
+    /** Mirrors DisableCommentsPlugin::COMMENT_BLOCKS as an independent spec of what must be silenced. */
+    private const COMMENT_BLOCKS = [
+        'core/comments',
+        'core/comments-title',
+        'core/comment-template',
+        'core/comments-pagination',
+        'core/comments-pagination-next',
+        'core/comments-pagination-numbers',
+        'core/comments-pagination-previous',
+        'core/comment-author-name',
+        'core/comment-content',
+        'core/comment-date',
+        'core/comment-edit-link',
+        'core/comment-reply-link',
+        'core/post-comments-form',
+        'core/post-comments-count',
+        'core/post-comments-link',
+        'core/latest-comments',
+        'core/post-comments',
+    ];
+
     public function test_comments_and_pings_are_closed_even_when_a_post_opts_in(): void
     {
         $postId = $this->createPost(['comment_status' => 'open', 'ping_status' => 'open']);
@@ -158,6 +180,49 @@ final class DisableCommentsPluginTest extends TestCase
         ]);
 
         $this->assertSame(['wp.getPosts' => 'cb'], $methods);
+    }
+
+    public function test_comment_blocks_are_hidden_from_the_inserter(): void
+    {
+        $registry = WP_Block_Type_Registry::get_instance();
+        // Sanity: the blocks this asserts on actually exist in this WordPress.
+        $this->assertNotNull($registry->get_registered('core/comments'));
+
+        foreach (self::COMMENT_BLOCKS as $name) {
+            $blockType = $registry->get_registered($name);
+            if ($blockType === null) {
+                continue; // legacy core/post-comments is no longer registered
+            }
+            $this->assertFalse($blockType->supports['inserter'] ?? null, $name);
+        }
+    }
+
+    public function test_comment_blocks_render_nothing(): void
+    {
+        $postId = $this->createPost();
+        $this->createComment($postId);
+
+        $this->assertSame('', do_blocks('<!-- wp:latest-comments /-->'));
+        $this->assertSame('', do_blocks('<!-- wp:post-comments-form /-->'));
+        $this->assertSame('', do_blocks('<!-- wp:comments --><!-- wp:comments-title /--><!-- /wp:comments -->'));
+    }
+
+    public function test_non_comment_blocks_still_render_and_stay_insertable(): void
+    {
+        $paragraph = WP_Block_Type_Registry::get_instance()->get_registered('core/paragraph');
+        $this->assertNotNull($paragraph);
+        $this->assertNotFalse($paragraph->supports['inserter'] ?? null);
+
+        $html = do_blocks('<!-- wp:paragraph --><p>Hello</p><!-- /wp:paragraph -->');
+        $this->assertSame('<p class="wp-block-paragraph">Hello</p>', trim($html));
+    }
+
+    public function test_pre_render_block_respects_an_earlier_short_circuit(): void
+    {
+        add_filter('pre_render_block', static fn(): string => 'kept');
+
+        $block = ['blockName' => 'core/latest-comments', 'attrs' => [], 'innerBlocks' => [], 'innerHTML' => '', 'innerContent' => []];
+        $this->assertSame('kept', render_block($block));
     }
 
     public function test_comment_feed_links_are_dropped_from_the_head(): void

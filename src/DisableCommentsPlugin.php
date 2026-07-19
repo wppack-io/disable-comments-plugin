@@ -27,9 +27,36 @@ final class DisableCommentsPlugin
     /** Comment types, as stored in the DB, that make up on-site discussion ('' is the legacy value for 'comment'). */
     private const DISCUSSION_TYPES = ['', 'comment', 'pingback', 'trackback'];
 
+    /**
+     * Core blocks whose whole purpose is on-site discussion. core/avatar is
+     * deliberately absent — it also renders post-author avatars. The legacy
+     * core/post-comments name only matters on the render path: it is no longer
+     * registered, but may survive in old template content.
+     */
+    private const COMMENT_BLOCKS = [
+        'core/comments',
+        'core/comments-title',
+        'core/comment-template',
+        'core/comments-pagination',
+        'core/comments-pagination-next',
+        'core/comments-pagination-numbers',
+        'core/comments-pagination-previous',
+        'core/comment-author-name',
+        'core/comment-content',
+        'core/comment-date',
+        'core/comment-edit-link',
+        'core/comment-reply-link',
+        'core/post-comments-form',
+        'core/post-comments-count',
+        'core/post-comments-link',
+        'core/latest-comments',
+        'core/post-comments',
+    ];
+
     public static function boot(): void
     {
         self::silenceDiscussion();
+        self::silenceBlocks();
         self::removePostTypeSupport();
         self::silenceFeedsAndPings();
         self::silenceRestAndXmlRpc();
@@ -115,6 +142,36 @@ final class DisableCommentsPlugin
         }
 
         return $expanded;
+    }
+
+    /** Comment blocks disappear from the inserter and produce no output. */
+    private static function silenceBlocks(): void
+    {
+        // Hide from the inserter without unregistering: the editor bootstraps
+        // server-side block definitions before the JS bundle registers its
+        // own, and the first definition wins, so this supports change reaches
+        // the editor with no JS shipped. Already-inserted instances stay
+        // valid — no "block unavailable" warnings, everything back on
+        // deactivation.
+        add_filter('register_block_type_args', static function (array $args, string $name): array {
+            if (in_array($name, self::COMMENT_BLOCKS, true)) {
+                $args['supports'] = ($args['supports'] ?? []);
+                $args['supports']['inserter'] = false;
+            }
+
+            return $args;
+        }, PHP_INT_MAX, 2);
+
+        // Short-circuit rendering before the block's render callback (and any
+        // database work) runs, so blocks already placed in content or block
+        // theme templates leave no markup behind.
+        add_filter('pre_render_block', static function ($pre, array $block) {
+            if ($pre === null && in_array($block['blockName'] ?? null, self::COMMENT_BLOCKS, true)) {
+                return '';
+            }
+
+            return $pre;
+        }, PHP_INT_MAX, 2);
     }
 
     /**
