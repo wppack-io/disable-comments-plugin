@@ -231,6 +231,19 @@ final class DisableCommentsPluginTest extends TestCase
         $this->assertFalse(apply_filters('feed_links_extra_show_post_comments_feed', true));
     }
 
+    public function test_site_editor_discussion_row_is_hidden_by_editor_css(): void
+    {
+        unset($GLOBALS['wp_styles']); // fresh instance so leftover registrations cannot mask a failure
+
+        do_action('enqueue_block_editor_assets');
+
+        $after = wp_styles()->get_data('wppack-disable-comments', 'after');
+        $this->assertIsArray($after);
+        $css = implode("\n", $after);
+        $this->assertStringContainsString(__('Change discussion settings'), $css);
+        $this->assertStringContainsString('display:none', $css);
+    }
+
     public function test_pingback_url_is_empty(): void
     {
         // 'display' is what bloginfo('pingback_url') and core's X-Pingback

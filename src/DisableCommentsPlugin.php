@@ -284,5 +284,24 @@ final class DisableCommentsPlugin
         add_action('widgets_init', static function (): void {
             unregister_widget('WP_Widget_Recent_Comments');
         }, PHP_INT_MAX);
+
+        // The site editor's home/index templates show a "Discussion" row that
+        // edits the site-wide default_comment_status option — pointless while
+        // every comment surface is off. Core mounts it with no filter, slot
+        // or support check, so hide it by its toggle's aria-label, the row's
+        // only stable hook. PHP and the editor read the same core
+        // translations, so the selector follows the admin locale; if core
+        // ever renames the string the row merely reappears. Enqueued on every
+        // block editor screen because templates can also be edited from the
+        // post editor.
+        add_action('enqueue_block_editor_assets', static function (): void {
+            wp_register_style('wppack-disable-comments', false, [], null);
+            wp_enqueue_style('wppack-disable-comments');
+            $label = str_replace('"', '\\"', __('Change discussion settings'));
+            wp_add_inline_style(
+                'wppack-disable-comments',
+                '.editor-post-panel__row:has(button[aria-label="' . $label . '"]){display:none;}',
+            );
+        });
     }
 }
