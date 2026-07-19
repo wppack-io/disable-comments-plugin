@@ -31,7 +31,7 @@ Claude-specific navigation + session hygiene, nothing duplicated from there.
 
 A single WordPress plugin (`wppack/disable-comments-plugin`, entry point
 `wppack-disable-comments.php`) with one class:
-`src/DisableCommentsPlugin.php`. `boot()` registers everything in five
+`src/DisableCommentsPlugin.php`. `boot()` registers everything in six
 groups, each a private method:
 
 - `silenceDiscussion()` — comments_open/pings_open false at `PHP_INT_MAX`;
@@ -39,6 +39,9 @@ groups, each a private method:
   `comments_pre_query` short-circuits discussion-type queries before the DB
   (`queriesDiscussion()` mirrors WP_Comment_Query's type-clause building —
   keep them in sync if core changes).
+- `silenceBlocks()` — COMMENT_BLOCKS hidden from the inserter
+  (register_block_type_args supports.inserter) and rendered as ''
+  (pre_render_block).
 - `removePostTypeSupport()` — comments/trackbacks support off every post
   type, late on init.
 - `silenceFeedsAndPings()` — comment feeds 404 (template_redirect at 9,
@@ -46,11 +49,17 @@ groups, each a private method:
 - `silenceRestAndXmlRpc()` — /wp/v2/comments routes, post/page 'replies'
   links, pingback./comment XML-RPC methods.
 - `cleanAdmin()` — Comments menu, Discussion settings, toolbar bubble,
-  Recent Comments widget; direct screen hits redirect to the dashboard.
+  Recent Comments widget, site editor's Discussion row (editor CSS); direct
+  screen hits redirect to the dashboard.
+
+The full behavior spec, including *why* each removal is safe, lives in
+[docs/specification.md](docs/specification.md) — keep it in sync with
+behavior changes.
 
 Conventions: `declare(strict_types=1)`, PER-CS 2.0, one final class, all
-hooks registered from static methods, English comments explaining *why*
-(each removal states what core does that makes it safe).
+hooks registered from static methods. Source comments stay concise (1-3
+lines, the non-obvious constraint only) — rationale and mechanism
+explanations belong in docs/specification.md, never in the code.
 
 ## Testing
 
@@ -126,7 +135,8 @@ surface is gone, deactivate, confirm the comment is back.
 ## Session Hygiene
 
 - **Documentation sync check on every change**: `README.md` and
-  `README.ja.md` must stay in sync — update both or neither.
+  `README.ja.md` must stay in sync — update both or neither. Behavior
+  changes also update `docs/specification.md`.
 - Edit → test → PHPStan → commit. Never claim done with red tests.
 - Discovered a bug along the way? Note it in the commit message or a
   follow-up; don't expand scope silently.
