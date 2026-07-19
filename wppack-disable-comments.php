@@ -14,7 +14,7 @@ declare(strict_types=1);
 /**
  * Plugin Name: WPPack Disable Comments
  * Description: Completely disable comments — closes discussion everywhere, hides existing comments, and removes every comment surface from wp-admin, feeds, REST and XML-RPC. No settings; deactivate to restore everything.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires PHP: 8.2
  * Requires at least: 6.7
  * Author: WPPack
