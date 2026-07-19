@@ -27,12 +27,7 @@ final class DisableCommentsPlugin
     /** Comment types, as stored in the DB, that make up on-site discussion ('' is the legacy value for 'comment'). */
     private const DISCUSSION_TYPES = ['', 'comment', 'pingback', 'trackback'];
 
-    /**
-     * Core blocks whose whole purpose is on-site discussion. core/avatar is
-     * deliberately absent — it also renders post-author avatars. The legacy
-     * core/post-comments name only matters on the render path: it is no longer
-     * registered, but may survive in old template content.
-     */
+    /** Core blocks that exist only for on-site discussion (see docs/specification.md for the exclusions). */
     private const COMMENT_BLOCKS = [
         'core/comments',
         'core/comments-title',
@@ -147,12 +142,8 @@ final class DisableCommentsPlugin
     /** Comment blocks disappear from the inserter and produce no output. */
     private static function silenceBlocks(): void
     {
-        // Hide from the inserter without unregistering: the editor bootstraps
-        // server-side block definitions before the JS bundle registers its
-        // own, and the first definition wins, so this supports change reaches
-        // the editor with no JS shipped. Already-inserted instances stay
-        // valid — no "block unavailable" warnings, everything back on
-        // deactivation.
+        // Hidden from the inserter, not unregistered: already-inserted
+        // instances stay valid and come back on deactivation.
         add_filter('register_block_type_args', static function (array $args, string $name): array {
             if (in_array($name, self::COMMENT_BLOCKS, true)) {
                 $args['supports'] = ($args['supports'] ?? []);
@@ -162,9 +153,7 @@ final class DisableCommentsPlugin
             return $args;
         }, PHP_INT_MAX, 2);
 
-        // Short-circuit rendering before the block's render callback (and any
-        // database work) runs, so blocks already placed in content or block
-        // theme templates leave no markup behind.
+        // Placed blocks leave no markup, short-circuited before any DB work.
         add_filter('pre_render_block', static function ($pre, array $block) {
             if ($pre === null && in_array($block['blockName'] ?? null, self::COMMENT_BLOCKS, true)) {
                 return '';
@@ -285,15 +274,9 @@ final class DisableCommentsPlugin
             unregister_widget('WP_Widget_Recent_Comments');
         }, PHP_INT_MAX);
 
-        // The site editor's home/index templates show a "Discussion" row that
-        // edits the site-wide default_comment_status option — pointless while
-        // every comment surface is off. Core mounts it with no filter, slot
-        // or support check, so hide it by its toggle's aria-label, the row's
-        // only stable hook. PHP and the editor read the same core
-        // translations, so the selector follows the admin locale; if core
-        // ever renames the string the row merely reappears. Enqueued on every
-        // block editor screen because templates can also be edited from the
-        // post editor.
+        // The site editor's sitewide "Discussion" row has no removal hook;
+        // hide it via its toggle's translated aria-label (its only stable
+        // selector — see docs/specification.md).
         add_action('enqueue_block_editor_assets', static function (): void {
             wp_register_style('wppack-disable-comments', false, [], null);
             wp_enqueue_style('wppack-disable-comments');
